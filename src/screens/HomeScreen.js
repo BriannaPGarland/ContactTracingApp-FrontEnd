@@ -1,20 +1,34 @@
 import React from 'react';
-import { View, Text, StyleSheet, SafeAreaView } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, AsyncStorage } from 'react-native';
 import { Agenda } from 'react-native-calendars';
+import axios from 'axios';
 
 export default class HomeScreen extends React.Component {
 	constructor(props) {
 		super(props);
 		this.state = {
-			userName: 'John Smith',
+			user: { firstName: '' }, // Default so that nothing breaks on error
 		};
+
+		this.initializeUser();
+	}
+
+	async initializeUser() {
+		const token = await AsyncStorage.getItem('auth-token');
+		axios({ method: 'get', url: 'https://traq-server.herokuapp.com/api/users/me', headers: { 'x-auth-token': token } })
+			.then((res) => {
+				this.setState({ user: res.data });
+			})
+			.catch((err) => {
+				console.log(err);
+			});
 	}
 
 	render() {
 		return (
 			<SafeAreaView style={styles.mainContainer}>
 				<Text style={styles.header}>
-					Hello, <Text style={styles.headerName}>{this.state.userName}</Text>
+					Hello, <Text style={styles.headerName}>{this.state.user.firstName}</Text>
 				</Text>
 				<View style={styles.mainContent}>
 					<Agenda
@@ -63,6 +77,5 @@ const styles = StyleSheet.create({
 	},
 	mainContent: {
 		flex: 1,
-		backgroundColor: 'red',
 	},
 });

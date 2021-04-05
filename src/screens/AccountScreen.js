@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, StyleSheet, SafeAreaView } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity } from 'react-native';
+import AntDesign from '@expo/vector-icons/AntDesign';
 
 export default class AccountScreen extends React.Component {
 	constructor(props) {
@@ -10,7 +11,12 @@ export default class AccountScreen extends React.Component {
 	render() {
 		return (
 			<SafeAreaView style={styles.mainContainer}>
-				<Text style={styles.header}>Account</Text>
+				<View style={styles.headerContainer}>
+					<Text style={styles.header}>Account</Text>
+					<TouchableOpacity onPress={this.props.didLogout}>
+						<AntDesign name='logout' size={24} color='#4d97b6' />
+					</TouchableOpacity>
+				</View>
 				<View style={styles.mainContent}></View>
 			</SafeAreaView>
 		);
@@ -23,9 +29,14 @@ const styles = StyleSheet.create({
 		width: '100%',
 		backgroundColor: 'white',
 	},
-	header: {
-		marginLeft: 16,
+	headerContainer: {
+		marginHorizontal: 16,
 		marginBottom: 16,
+		flexDirection: 'row',
+		justifyContent: 'space-between',
+		alignItems: 'center',
+	},
+	header: {
 		fontSize: 22,
 		fontWeight: '700',
 		color: '#707070',
@@ -33,6 +44,5 @@ const styles = StyleSheet.create({
 	mainContent: {
 		flex: 1,
 		marginHorizontal: 16,
-		backgroundColor: 'blue',
 	},
 });

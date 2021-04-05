@@ -63,7 +63,12 @@ export default class RegistrationScreen extends React.Component {
 							style={styles.input}
 						/>
 					</View>
-					<TouchableOpacity style={styles.submitButton} onPress={this.props.didLogin}>
+					<TouchableOpacity
+						style={styles.submitButton}
+						onPress={() => {
+							this.props.didLogin(this.state.email, this.state.password);
+						}}
+					>
 						<Text style={styles.submitText}>Submit</Text>
 					</TouchableOpacity>
 					<TouchableOpacity style={styles.switchButton} onPress={this.toggleRegistrationView}>
@@ -116,7 +121,8 @@ export default class RegistrationScreen extends React.Component {
 					<TouchableOpacity
 						style={styles.submitButton}
 						onPress={() => {
-							console.log('test');
+							const { email, password, firstName, lastName } = this.state;
+							this.props.didSignup(email, password, firstName, lastName);
 						}}
 					>
 						<Text style={styles.submitText}>Submit</Text>

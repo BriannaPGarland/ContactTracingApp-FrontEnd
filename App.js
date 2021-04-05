@@ -1,7 +1,8 @@
 import * as React from 'react';
-import { Text, View } from 'react-native';
+import { Text, View, AsyncStorage } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import axios from 'axios';
 // Icons for Tab bar
 import AntDesign from '@expo/vector-icons/AntDesign';
 // Screen imports
@@ -18,30 +19,66 @@ export default class App extends React.Component {
 		this.state = {
 			isInitialized: false,
 			loggedIn: false,
+			user: {},
 		};
-		this.didLogin = this.didLogin.bind(this);
 	}
 
-	componentDidMount() {
-		// Force account and app initialization for now
-		this.setState({
-			isInitialized: true,
-			loggedIn: false,
-		});
+	async componentDidMount() {
+		// Check for tokens in account
+		const token = await AsyncStorage.getItem('auth-token');
+		if (token) {
+			this.setState({
+				isInitialized: true,
+				loggedIn: true,
+			});
+		} else {
+			// App initialized but no token, push to registration
+			this.setState({
+				isInitialized: true,
+				loggedIn: false,
+			});
+		}
 	}
 
-	didLogin() {
-		this.setState({
-			loggedIn: true,
-		});
-	}
+	didLogin = (email, password) => {
+		axios
+			.post('https://traq-server.herokuapp.com/api/auth', { email, password })
+			.then(async (res) => {
+				await AsyncStorage.setItem('auth-token', res.data);
+				this.setState({
+					loggedIn: true,
+				});
+			})
+			.catch((err) => {
+				console.log(err);
+			});
+	};
+	didSignup = (email, password, firstName, lastName) => {
+		axios
+			.post('https://traq-server.herokuapp.com/api/users', { firstName, lastName, email, password })
+			.then(async (res) => {
+				await AsyncStorage.setItem('auth-token', res.headers['x-auth-token']);
+				this.setState({
+					loggedIn: true,
+				});
+			})
+			.catch((err) => {
+				console.log(err);
+			});
+	};
+	didLogout = async () => {
+		// Throw out auth token
+		await AsyncStorage.removeItem('auth-token');
+		// Send back to registration
+		this.setState({ loggedIn: false });
+	};
 
 	render() {
 		const { isInitialized, loggedIn } = this.state;
 		if (isInitialized) {
 			if (!loggedIn) {
 				// Signup and Login workflow
-				return <RegistrationScreen didLogin={this.didLogin} />;
+				return <RegistrationScreen didLogin={this.didLogin} didSignup={this.didSignup} />;
 			} else {
 				return (
 					<NavigationContainer>
@@ -69,7 +106,8 @@ export default class App extends React.Component {
 						>
 							<Tab.Screen name='Friends' component={FriendScreen} />
 							<Tab.Screen name='Home' component={HomeScreen} />
-							<Tab.Screen name='Account' component={AccountScreen} />
+							<Tab.Screen name='Account' children={() => <AccountScreen didLogout={this.didLogout} />} />
+							{/* This component implementation is used to pass props into the account screen */}
 						</Tab.Navigator>
 					</NavigationContainer>
 				);
