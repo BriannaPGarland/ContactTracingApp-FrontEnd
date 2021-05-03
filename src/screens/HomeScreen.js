@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, SafeAreaView, AsyncStorage } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, AsyncStorage, TouchableOpacity, Alert } from 'react-native';
 import { Agenda } from 'react-native-calendars';
 import axios from 'axios';
 
@@ -7,9 +7,11 @@ export default class HomeScreen extends React.Component {
 	constructor(props) {
 		super(props);
 		this.state = {
+			items: {},
 			user: { firstName: '' }, // Default so that nothing breaks on error
 		};
 
+		this.generateDemoItems();
 		this.initializeUser();
 	}
 
@@ -24,6 +26,70 @@ export default class HomeScreen extends React.Component {
 			});
 	}
 
+	generateDemoItems() {
+		var date = new Date();
+		date.setDate(date.getDate() + 5);
+		var dateInAdvanceFormatted = date.toISOString().split('T')[0];
+
+		this.state.items[dateInAdvanceFormatted] = [];
+		this.state.items[dateInAdvanceFormatted].push({
+			demo: true,
+			name: 'John Smith quarantine ends',
+			height: 100,
+		});
+	}
+
+	loadItems(day) {
+		setTimeout(() => {
+			for (let i = -15; i < 85; i++) {
+				const time = day.timestamp + i * 24 * 60 * 60 * 1000;
+				const strTime = this.timeToString(time);
+				if (!this.state.items[strTime]) {
+					this.state.items[strTime] = [];
+					const numItems = 1;
+					for (let j = 0; j < numItems; j++) {
+						this.state.items[strTime].push({
+							//name: 'Item for ' + strTime + ' #' + j,
+							height: 100,
+						});
+					}
+				}
+			}
+			const newItems = {};
+			Object.keys(this.state.items).forEach((key) => {
+				newItems[key] = this.state.items[key];
+			});
+			this.setState({
+				items: newItems,
+			});
+		}, 1000);
+	}
+
+	renderItem(item) {
+		return (
+			<TouchableOpacity style={[styles.item, { height: item.height, backgroundColor: item.demo ? '#4d97b6' : '#f4f4f4' }]}>
+				<Text style={styles.itemText}>{item.name}</Text>
+			</TouchableOpacity>
+		);
+	}
+
+	renderEmptyDate() {
+		return (
+			<View style={styles.emptyDate}>
+				<Text>This is empty date!</Text>
+			</View>
+		);
+	}
+
+	rowHasChanged(r1, r2) {
+		return r1.name !== r2.name;
+	}
+
+	timeToString(time) {
+		const date = new Date(time);
+		return date.toISOString().split('T')[0];
+	}
+
 	render() {
 		return (
 			<SafeAreaView style={styles.mainContainer}>
@@ -32,12 +98,11 @@ export default class HomeScreen extends React.Component {
 				</Text>
 				<View style={styles.mainContent}>
 					<Agenda
-						items={{
-							'2021-03-29': [{ name: 'item 1 - any js object' }],
-							'2021-04-05': [{ name: 'item 2 - any js object', height: 80 }],
-							'2021-04-07': [],
-							'2021-04-15': [{ name: 'item 3 - any js object' }, { name: 'any js object' }],
-						}}
+						items={this.state.items}
+						loadItemsForMonth={this.loadItems.bind(this)}
+						renderItem={this.renderItem.bind(this)}
+						renderEmptyDate={this.renderEmptyDate.bind(this)}
+						rowHasChanged={this.rowHasChanged.bind(this)}
 						theme={{
 							dayTextColor: '#1a1b1b',
 							todayTextColor: '#4d97b6',
@@ -77,5 +142,16 @@ const styles = StyleSheet.create({
 	},
 	mainContent: {
 		flex: 1,
+	},
+	item: {
+		justifyContent: 'center',
+		borderTopLeftRadius: 25,
+		borderBottomLeftRadius: 25,
+	},
+	itemText: {
+		marginLeft: 16,
+		fontSize: 20,
+		fontWeight: '700',
+		color: '#fff',
 	},
 });
